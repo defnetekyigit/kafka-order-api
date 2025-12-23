@@ -1,0 +1,68 @@
+version: "3.8"
+
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.6.0
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+
+  kafka-1:
+    image: confluentinc/cp-kafka:7.6.0
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-1:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+    depends_on: [zookeeper]
+
+  kafka-2:
+    image: confluentinc/cp-kafka:7.6.0
+    environment:
+      KAFKA_BROKER_ID: 2
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-2:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+    depends_on: [zookeeper]
+
+  kafka-3:
+    image: confluentinc/cp-kafka:7.6.0
+    environment:
+      KAFKA_BROKER_ID: 3
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-3:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+    depends_on: [zookeeper]
+    
+  order-service:
+    build: ./services/order-service
+    environment:
+      KAFKA_BROKERS: kafka-1:9092,kafka-2:9092,kafka-3:9092
+      MONGO_URL: ${MONGO_URL}
+      MONGO_DB: ecommerce
+    ports:
+      - "3000:3000"
+    depends_on: [kafka-1]
+
+  payment-service:
+    build: ./services/payment-service
+    environment:
+      KAFKA_BROKERS: kafka-1:9092,kafka-2:9092,kafka-3:9092
+      MONGO_URL: ${MONGO_URL}
+      MONGO_DB: ecommerce
+    depends_on: [kafka-1]
+
+  inventory-service:
+    build: ./services/inventory-service
+    environment:
+      KAFKA_BROKERS: kafka-1:9092,kafka-2:9092,kafka-3:9092
+      MONGO_URL: ${MONGO_URL}
+      MONGO_DB: ecommerce
+    depends_on: [kafka-1]
+
+  notification-service:
+    build: ./services/notification-service
+    environment:
+      KAFKA_BROKERS: kafka-1:9092,kafka-2:9092,kafka-3:9092
+      MONGO_URL: ${MONGO_URL}
+      MONGO_DB: ecommerce
+    depends_on: [kafka-1]
